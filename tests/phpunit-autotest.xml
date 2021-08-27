@@ -11,22 +11,5 @@
 		<directory suffix='.php'>Unit/</directory>
 		<file>apps.php</file>
 	</testsuite>
-	<!-- filters for code coverage -->
-	<filter>
-		<!-- whitelist processUncoveredFilesFromWhitelist="true" -->
-		<whitelist>
-			<directory suffix=".php">..</directory>
-			<exclude>
-				<directory suffix=".php">../3rdparty</directory>
-				<directory suffix=".php">../apps/*/composer</directory>
-				<directory suffix=".php">../apps/*/tests</directory>
-				<directory suffix=".php">../apps/files_external/3rdparty</directory>
-				<directory suffix=".php">../build</directory>
-				<directory suffix=".php">../lib/composer</directory>
-				<directory suffix=".php">../tests</directory>
-			</exclude>
-		</whitelist>
-	</filter>
-
 </phpunit>
 
