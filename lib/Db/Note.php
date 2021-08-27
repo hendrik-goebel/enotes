@@ -4,39 +4,28 @@ declare(strict_types=1);
 namespace OCA\Enotes\Db;
 
 use OCP\AppFramework\Db\Entity;
+use stdClass;
+use JsonSerializable;
 
-class Note extends Entity implements \JsonSerializable {
-
-	/**
-	 * @var string
-	 */
+class Note extends Entity implements JsonSerializable
+{
 	protected $type;
 
-	/**
-	 * @var string
-	 */
 	protected $location;
 
-	/**
-	 * @var string
-	 */
 	protected $content;
 
-	/**
-	 * @var int
-	 */
 	protected $bookId;
 
-	/**
-	 * @var string
-	 */
 	protected $hash;
 
-	public function __toString() {
+	public function __toString()
+	{
 		return $this->hash;
 	}
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->addType('id', 'integer');
 		$this->addType('type', 'string');
 		$this->addType('location', 'string');
@@ -47,41 +36,43 @@ class Note extends Entity implements \JsonSerializable {
 
 	/**
 	 * @param string $type
-	 * @return Note
 	 */
-	public function setType(string $type) {
+	public function setType(string $type)
+	{
 		parent::setType($type);
 		$this->updateHash();
 	}
 
 	/**
 	 * @param string $location
-	 * @return Note
 	 */
-	public function setLocation(string $location) {
+	public function setLocation(string $location)
+	{
 		parent::setLocation($location);
 		$this->updateHash();
 	}
 
 	/**
 	 * @param string $content
-	 * @return Note
 	 */
-	public function setContent(string $content) {
-		parent::setContent($content);
+	public function setContent(string $content)
+	{
+		$this->content = $content;
+		$this->markFieldUpdated('content');
 		$this->updateHash();
 	}
 
 	/**
-	 * @param string $bookId
-	 * @return Note
+	 * @param int $bookId
 	 */
-	public function setBookId(int $bookId) {
+	public function setBookId(int $bookId)
+	{
 		parent::setBookId($bookId);
 		$this->updateHash();
 	}
 
-	public function updateHash() {
+	public function updateHash()
+	{
 		if ($this->getBookId() && $this->getLocation() && $this->getContent() && $this->getType()) {
 			$this->setHash(hash('sha256',
 				$this->getBookId() .
@@ -91,8 +82,12 @@ class Note extends Entity implements \JsonSerializable {
 		}
 	}
 
-	public function jsonSerialize() {
-		$obj = new \StdClass();
+	/**
+	 * @return stdClass
+	 */
+	public function jsonSerialize(): stdClass
+	{
+		$obj = new StdClass();
 		$obj->type = $this->getType();
 		$obj->content = $this->getContent();
 		$obj->bookId = $this->getBookId();

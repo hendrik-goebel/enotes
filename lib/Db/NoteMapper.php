@@ -1,27 +1,51 @@
 <?php
+declare(strict_types=1);
 
 namespace OCA\Enotes\Db;
 
-use OCP\IDbConnection;
+use OC\DB\Exceptions\DbalException;
+use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\Entity;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
-class NoteMapper extends QBMapper {
-	public function __construct(IDbConnection $db) {
+class NoteMapper extends QBMapper
+{
+	public function __construct(IDbConnection $db)
+	{
 		parent::__construct($db, 'enote_note', Note::class);
 	}
 
-	public function insert(Entity $note): Entity {
+	/**
+	 * @param Entity $entity
+	 * @return Entity
+	 * @throws DbalException
+	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function insert(Entity $entity): Entity
+	{
 		try {
-			return parent::insert($note);
-		} catch (UniqueConstraintViolationException $e) {
-			// Don't throw an exception if entity is already stored
-			return $this->findByHash($note->getHash());
+			return parent::insert($entity);
+		} catch (DbalException $e) {
+			if ($e->getReason() === DbalException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+				//Already stored, return entity
+				return $this->findByHash($entity->getHash());
+			} else {
+				throw $e;
+			}
 		}
 	}
 
-	public function findByHash(string $hash) {
+	/**
+	 * @param string $hash
+	 * @return Entity
+	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function findByHash(string $hash): Entity
+	{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())

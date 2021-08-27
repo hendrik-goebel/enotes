@@ -6,13 +6,16 @@ use OC\L10N\LazyL10N;
 use OCA\Enotes\Db\BookMapper;
 use OCA\Enotes\Db\Settings;
 use OCA\Enotes\Db\SettingsMapper;
-use OCA\Enotes\MailAdapterFixture;
+use OCA\Enotes\Dto\MailAccountSetting;
+use OCA\Enotes\Tests\Unit\MailAdapterFixture;
 use OCA\Enotes\Service\MailService;
 use OCA\Enotes\Service\NoteService;
+use OCA\Enotes\Service\SettingsService;
 use OCA\Enotes\Controller\SettingsController;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IL10N;
 use PHPunit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class SettingsControllerTest extends TestCase
 {
@@ -65,41 +68,25 @@ class SettingsControllerTest extends TestCase
 	public function setUp(): void
 	{
 		$this->settings = new Settings();
-		$this->settings->setMailAccounts([
-				['id' => 1,
-					'email' => 'mail1@xyz.de',
-					'active' => true
-				],
-				[
-					'id' => 2,
-					'email' => 'mail2@xyz.de',
-					'active' => true
-				]
+		$this->settings->setMailAccountSettings(
+			[
+				new MailAccountSetting(1, 'mail@xyz.de', true),
+				new MailAccountSetting(2, 'mail@xyz.de', true)
 			]
 		);
 
 		$this->defaultSettings = new Settings();
-		$this->defaultSettings->setMailAccounts([
-				['id' => 1,
-					'email' => 'mail1@xyz.de',
-					'active' => true
-				],
-				[
-					'id' => 2,
-					'email' => 'mail2@xyz.de',
-					'active' => true
-				],
-				[
-					'id' => 3,
-					'email' => 'mail4@xyz.de',
-					'active' => true
-				]
+		$this->settings->setMailAccountSettings(
+			[
+				new MailAccountSetting(1, 'mail1@xyz.de', true),
+				new MailAccountSetting(2, 'mail2@xyz.de', true),
+				new MailAccountSetting(3, 'mail4@xyz.de', true)
 			]
 		);
 
 		$this->settingsParams = [
 			'userId' => 'admin',
-			'mailAccounts' => [
+			'mailAccountSettings' => [
 				['id' => 1,
 					'email' => 'mail1@xyz.de',
 					'active' => true
@@ -124,15 +111,35 @@ class SettingsControllerTest extends TestCase
 		$this->mailAdapter->method('getDefaultSettings')
 			->willReturn($this->defaultSettings);
 
+		$this->settingsService = $this->getMockBuilder(SettingsService::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->noteService = $this->getMockBuilder(NoteService::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->bookMapper = $this->getMockBuilder(BookMapper::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		$this->settingsService
+			->method('getSettings')
+			->willReturn($this->settings);
+
 		$this->request = $this->getMockBuilder('OCP\IRequest')->getMock();
 	}
 
 	protected function createSettingsController()
 	{
 		$appName = 'enotes';
-		$userId = 'alice';
+		$userId = 'sauron';
 
 		$l = $this->getMockBuilder(LazyL10N::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		$logger = $this->getMockBuilder(LoggerInterface::class)
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -141,7 +148,11 @@ class SettingsControllerTest extends TestCase
 			$l,
 			$this->request,
 			$this->settingsMapper,
+			$this->settingsService,
+			$this->noteService,
+			$this->bookMapper,
 			$this->mailAdapter,
+			$logger,
 			$userId
 		);
 	}
@@ -168,51 +179,33 @@ class SettingsControllerTest extends TestCase
 	public function testUpdateMailAccounts()
 	{
 		$userMailAccounts = [
-			['id' => 1,
-				'email' => 'mail1@xyz.de',
-				'active' => false
-			],
-			[
-				'id' => 2,
-				'email' => 'mail2@xyz.de',
-				'active' => false
-			]
+			new MailAccountSetting(1, 'mail1@xyz.de', false),
+			new MailAccountSetting(2, 'mail2@xyz.de', false)
 		];
 
 		$newMailAccounts = [
-			['id' => 1,
-				'email' => 'mail1@xyz.de',
-				'active' => true
-			],
-			[
-				'id' => 2,
-				'email' => 'mail2@xyz.de',
-				'active' => true
-			],
-			[
-				'id' => 3,
-				'email' => 'mail3@xyz.de',
-				'active' => true
-			]
+			new MailAccountSetting(1, 'mail1@xyz.de', true),
+			new MailAccountSetting(2, 'mail2@xyz.de', true),
+			new MailAccountSetting(3, 'mail3@xyz.de', true),
 		];
 
-		$this->settings->setMailAccounts([]);
-		$this->settings->mergeWithDefaultMailaccounts($newMailAccounts);
+		$this->settings->setMailAccountSettings([]);
+		$this->settings->mergeWithDefaultMailAccounts($newMailAccounts);
 
-		$resultMailAccounts = $this->settings->getMailAccounts();
-
-		$this->assertCount(3, $resultMailAccounts);
-		$this->assertEquals('mail2@xyz.de', $resultMailAccounts[1]['email']);
-
-
-		$this->settings->setMailAccounts($userMailAccounts);
-		$this->settings->mergeWithDefaultMailaccounts($newMailAccounts);
-
-		$resultMailAccounts = $this->settings->getMailAccounts();
+		$resultMailAccounts = $this->settings->getMailAccountSettings();
 
 		$this->assertCount(3, $resultMailAccounts);
-		$this->assertEquals('mail3@xyz.de', $resultMailAccounts[2]['email']);
-		$this->assertFalse($resultMailAccounts[0]['active']);
+		$this->assertEquals('mail2@xyz.de', $resultMailAccounts[1]->getEmail());
+
+
+		$this->settings->setMailAccountSettings($userMailAccounts);
+		$this->settings->mergeWithDefaultMailAccounts($newMailAccounts);
+
+		$resultMailAccounts = $this->settings->getMailAccountSettings();
+
+		$this->assertCount(3, $resultMailAccounts);
+		$this->assertEquals('mail3@xyz.de', $resultMailAccounts[2]->getEmail());
+		$this->assertFalse($resultMailAccounts[0]->isActive());
 	}
 
 	/**
@@ -230,28 +223,15 @@ class SettingsControllerTest extends TestCase
 	}
 
 	/**
-	 * A settings controller get method returns a setting object of the current user if it exists.
+	 * A settings controller get method returns a setting object
+	 * of the current user if it exists.
 	 */
 	public function testGetStoredSettings()
 	{
 		$settingsController = $this->createSettingsController();
 		$result = $settingsController->get()->getData();
 		$decodedResult = json_decode($result);
-		$this->assertEquals($decodedResult->mailAccounts[0]->email, $this->settings->getMailAccounts()[0]['email']);
-		$this->assertEquals($decodedResult->mailAccounts[1]->email, $this->settings->getMailAccounts()[1]['email']);
-	}
-
-	/**
-	 * A settings controller returns default settings if no settings are stored for
-	 * the current user.
-	 */
-	public function testGetNewSettings()
-	{
-		$this->settingsMapper->method('findByUserId')
-			->willThrowException(new DoesNotExistException('does not exist'));
-		$settingsController = $this->createSettingsController();
-
-		$result = json_decode($settingsController->get()->getData());
-		$this->assertEquals('mail4@xyz.de', $result->mailAccounts[2]->email);
+		$this->assertEquals($decodedResult->mailAccountSettings[0]->email, $this->settings->getMailAccountSettings()[0]->getEmail());
+		$this->assertEquals($decodedResult->mailAccountSettings[1]->email, $this->settings->getMailAccountSettings()[1]->getEmail());
 	}
 }
