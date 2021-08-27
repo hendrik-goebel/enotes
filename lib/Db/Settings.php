@@ -3,37 +3,47 @@ declare(strict_types=1);
 
 namespace OCA\Enotes\Db;
 
+use OCA\Enotes\Dto\MailAccountSetting;
 use OCP\AppFramework\Db\Entity;
+use JsonSerializable;
 
-class Settings extends Entity
+class Settings extends Entity implements JsonSerializable
 {
-	public string $userId = '';
+	protected string $userId = '';
 
-	public $mailAccounts = [];
+	/**
+	 * @var MailAccountSetting[]
+	 */
+	public $mailAccountSettings;
 
-	public string $types = '';
+	protected string $types = '';
 
 	/**
 	 * Maps the settings state so that it fits to the default settings
 	 *
-	 * @param array $defaultMailAccounts
+	 * @param MailAccountSetting[] $defaultMailAccounts
 	 * @return $this
 	 */
-	public function mergeWithDefaultMailaccounts(array $defaultMailAccounts): Settings
+	public function mergeWithDefaultMailAccounts(array $defaultMailAccounts): Settings
 	{
-		if (empty($this->mailAccounts)) {
-			$this->setMailAccounts($defaultMailAccounts);
+		if (empty($this->mailAccountSettings)) {
+			$this->setMailAccountSettings($defaultMailAccounts);
 			return $this;
 		}
 
-		$idsUser = array_column($this->mailAccounts, 'id');
-		$idsDefault = array_column($defaultMailAccounts, 'id');
+		$idsUser = array_map(function ($item) {
+			return $item->getId();
+		}, $this->mailAccountSettings);
 
-		$mailAccountsUser = array_combine($idsUser, $this->mailAccounts);
+		$idsDefault = array_map(function ($item) {
+			return $item->getId();
+		}, $defaultMailAccounts);
+
+		$mailAccountsUser = array_combine($idsUser, $this->mailAccountSettings);
 		$mailAccountsDefault = array_combine($idsDefault, $defaultMailAccounts);
 
 		$resultAccounts = [];
-		foreach($mailAccountsDefault as $idDefault => $accountDefault) {
+		foreach ($mailAccountsDefault as $idDefault => $accountDefault) {
 			$account = $accountDefault;
 			if (in_array($idDefault, $idsUser)) {
 				$account = $mailAccountsUser[$idDefault];
@@ -41,8 +51,12 @@ class Settings extends Entity
 			$resultAccounts[] = $account;
 		}
 
-		$this->setMailAccounts($resultAccounts);
-
+		$this->setMailAccountSettings($resultAccounts);
 		return $this;
+	}
+
+	public function jsonSerialize()
+	{
+		return get_object_vars($this);
 	}
 }

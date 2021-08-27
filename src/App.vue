@@ -30,11 +30,9 @@
 				<div v-if="showLoadingIcon" class="icon-loading spinner"/>
 				<Settings
 					v-if="view.settings"
-					@showSuccessAlert="showSuccessAlert($event)"
-					@showErrorAlert="showErrorAlert($event)"
-					@isLoading="displayLoadingIcon"
-					@stopLoading="hideLoadingIcon"
-					@fetchNotes="fetchNotes"
+					@requestFailed="handleError($event)"
+					@requestStarted="onRequestStarted"
+					@requestSucceeded="onRequestSucceeded($event)"
 				/>
 				<Note v-if="view.notes" v-for="note in book.notes"
 					  :note="note"
@@ -69,7 +67,7 @@ export default {
 		Note,
 		Settings
 	},
-	data () {
+	data() {
 		return {
 			view: {
 				notes: true,
@@ -81,6 +79,7 @@ export default {
 			settings: {},
 			isSettingsPage: false,
 			alertMessage: '',
+			isRequesting: false,
 			alertType: '',
 			note: {
 				type: '',
@@ -96,43 +95,60 @@ export default {
 		}
 	},
 
-	mounted () {
+	mounted() {
 		//this.getNotes()
 	},
 	methods: {
-		handleError (error) {
+		handleError(error) {
+			this.hideLoadingIcon()
+			this.isRequesting = false
 			if (error.response) {
 				// Request made and server responded
 				this.alertMessage = error.response.data
 				this.alertType = 'error'
 			} else if (error.request) {
 				// The request was made but no response was received
-				console.log(error.request)
+				console.error(error.request)
 			} else {
 				// Something happened in setting up the request that triggered an Error
-				console.log('Error', error.message)
+				console.error('Error', error.message)
+			}
+		},
+		onRequestStarted() {
+			this.isRequesting = true
+			setTimeout(() => {
+				if (this.isRequesting) {
+					this.displayLoadingIcon()
+				}
+			}, 500)
+		},
+		onRequestSucceeded(response) {
+			this.isRequesting = false
+			this.hideLoadingIcon()
+			if (response.data.message) {
+				this.showSuccessAlert(response.data.message)
 			}
 		},
 		hiderAlert() {
-			this.alertMessage = null
+			this.clear()
 		},
-		showSuccessAlert (message) {
+		showSuccessAlert(message) {
 			this.alertMessage = message
 			this.alertType = "success"
 			this.hideLoadingIcon()
 		},
-		showErrorAlert (message) {
+		showErrorAlert(message) {
 			this.alertMessage = message
 			this.alertType = "error"
 			this.hideLoadingIcon()
 		},
-		displayLoadingIcon () {
+		displayLoadingIcon() {
 			this.showLoadingIcon = true
 		},
-		hideLoadingIcon () {
+		hideLoadingIcon() {
 			this.showLoadingIcon = false
 		},
-		selectView (view) {
+		selectView(view) {
 			switch (view) {
 				case 'settings':
 					this.view.notes = !this.view.notes
@@ -144,7 +160,7 @@ export default {
 			}
 			this.hiderAlert()
 		},
-		getNotes () {
+		getNotes() {
 			const vm = this
 			vm.displayLoadingIcon()
 			axios
@@ -160,27 +176,16 @@ export default {
 					vm.handleError(error)
 				})
 		},
-		fetchNotes () {
-			const vm = this
-			vm.displayLoadingIcon()
-			axios
-				.get(routes.getFetch)
-				.then(function () {
-					vm.showSuccessAlert("Fetched notes")
-				})
-				.catch(function (error) {
-					vm.handleError(error)
-				})
-		},
 
-		selectNote (note) {
+
+		selectNote(note) {
 			this.note = note
 			this.book = this.books.filter(function (book) {
 				return (book.id === note.bookId)
 			}).pop()
 		},
 
-		updateSettings () {
+		updateSettings() {
 			const vm = this
 			axios
 				.put(routes.updateSettings, vm.settings)
@@ -191,11 +196,12 @@ export default {
 					vm.handleError(error)
 				})
 		},
-		selectBook (book) {
+		selectBook(book) {
 			this.book = book
 		},
-		clear () {
-			this.alertMessage = '';
+		clear() {
+			this.alertMessage = ''
+			this.hideLoadingIcon()
 		},
 	},
 

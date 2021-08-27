@@ -5,30 +5,15 @@ namespace OCA\Enotes\Service;
 
 use OCA\Mail\Service\AccountService;
 use OCA\Mail\Contracts\IMailManager;
-use OCA\Mail\Db\Mailbox;
 use OCA\Mail\Contracts\IMailSearch;
 
 class MailService {
 
-	/**
-	 * @var string
-	 */
-	protected $currentUserId;
+	protected string $currentUserId;
 
-	/**
-	 * @var AccountService
-	 */
-	protected $accountService;
+	protected AccountService $accountService;
 
-	/**
-	 * @var IMailManager
-	 */
-	protected $mailManager;
-
-	/**
-	 * @var string
-	 */
-	public $mailFilter = 'From:no-reply@amazon.com';
+	protected IMailManager $mailManager;
 
 	public function __construct(
 		AccountService $accountService,
@@ -70,20 +55,6 @@ class MailService {
 		return $this->accountService->findByUserId($this->currentUserId);
 	}
 
-	/**
-	 * @param MailAccount $mailAccount
-	 * TODO: remove Filter Magic number
-	 */
-	public function getMails($mailAccount, $mailbox): array {
-
-		return $this->mailSearch->findMessages(
-			$mailAccount,
-			$mailbox,
-			$this->mailFilter,
-			$cursor = null,
-			$limit = 100
-		);
-	}
 
 	public function getCsvAttachments(array $mails, $folder): array {
 

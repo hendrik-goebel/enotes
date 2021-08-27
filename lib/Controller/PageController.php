@@ -26,7 +26,6 @@ namespace OCA\Enotes\Controller;
 
 use OCP\IRequest;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Controller;
 use OCP\Util;
 
@@ -62,10 +61,6 @@ class PageController extends Controller {
 	 */
 	protected $mailService;
 
-	/**
-	 * @var NoteService
-	 */
-	protected $noteService;
 
 	public function __construct(
 		$appName,
@@ -75,7 +70,6 @@ class PageController extends Controller {
 		AliasesService $aliasesService,
 		IMailSearch $mailSearch,
 		MailService $mailService,
-		NoteService $noteService,
 		?string $UserId
 	) {
 		parent::__construct($appName, $request);
@@ -86,7 +80,6 @@ class PageController extends Controller {
 		$this->aliasesService = $aliasesService;
 		$this->mailSearch = $mailSearch;
 		$this->mailService = $mailService;
-		$this->noteService = $noteService;
 	}
 
 	/**

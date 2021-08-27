@@ -7,7 +7,7 @@ use OCP\DB\ISchemaWrapper;
 use OCP\Migration\SimpleMigrationStep;
 use OCP\Migration\IOutput;
 
-class Version2Date20210529144156 extends SimpleMigrationStep {
+class Version2Date202105291441512 extends SimpleMigrationStep {
 
 	/**
 	 * @param IOutput $output
@@ -116,11 +116,11 @@ class Version2Date20210529144156 extends SimpleMigrationStep {
 				'length' => 256,
 			]);
 
-			$table->addColumn('mail_accounts', 'text', [
+			$table->addColumn('mail_account_settings', 'text', [
 				'notnull' => true,
 			]);
 
-			$table->addColumn('types', 'text', [
+			$table->addColumn('types', 'string', [
 				'notnull' => true,
 			]);
 

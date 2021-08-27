@@ -2,34 +2,62 @@
 
 namespace OCA\Enotes\Db;
 
-use OCP\IDbConnection;
+use OC\DB\Exceptions\DbalException;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IDBConnection;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Db\Entity;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
-class BookMapper extends QBMapper {
+class BookMapper extends QBMapper
+{
+	protected NoteMapper $noteMapper;
 
-	public function __construct(IDbConnection $db) {
+	public function __construct(
+		IDBConnection $db,
+		NoteMapper    $noteMapper
+	)
+	{
+		$this->noteMapper = $noteMapper;
 		parent::__construct($db, 'enote_book', Book::class);
 	}
 
-	public function insert(Entity $book): Entity {
+	/**
+	 * @param Entity $entity
+	 * @return Entity
+	 * @throws DbalException
+	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function insert(Entity $entity): Entity
+	{
 		try {
-			return parent::insert($book);
-		} catch (UniqueConstraintViolationException $e) {
-			// Don't throw an exception if entity is already stored
-			return $this->findByHash($book->getHash());
+			$bookSaved = parent::insert($entity);
+		} catch (DbalException $e) {
+			if ($e->getReason() === DbalException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+				// If already exists return the existing entity
+				$bookSaved = $this->findByHash($entity->getHash());
+			} else {
+				throw $e;
+			}
 		}
+
+		foreach ($entity->getNotes() as $note) {
+			$note->setBookId($bookSaved->getId());
+			$noteSaved = $this->noteMapper->insert($note);
+			$bookSaved->addNote($noteSaved);
+		}
+
+		return $bookSaved;
 	}
 
 	/**
-	 * Finds all books of the user and attaches the related notes to it
-	 *
 	 * @param $userId
 	 * @return array
+	 * @throws \OCP\DB\Exception
 	 */
-	public function findByUserId($userId) {
-
+	public function findByUserId($userId): array
+	{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select(
 			'b.id as book_id', 'b.title as book_title', 'b.hash as book_hash', 'b.device_id as book_device_id',
@@ -40,6 +68,7 @@ class BookMapper extends QBMapper {
 			->where(
 				$qb->expr()->eq('user_id', $qb->createNamedParameter($userId))
 			);
+
 		$cursor = $qb->execute();
 		$books = [];
 
@@ -66,8 +95,14 @@ class BookMapper extends QBMapper {
 		return array_values($books);
 	}
 
-	public function findByHash(string $hash) {
-
+	/**
+	 * @param string $hash
+	 * @return Entity
+	 * @throws DoesNotExistException
+	 * @throws MultipleObjectsReturnedException
+	 */
+	public function findByHash(string $hash): Entity
+	{
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())

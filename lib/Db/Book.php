@@ -1,51 +1,30 @@
 <?php
+declare(strict_types=1);
 
 namespace OCA\Enotes\Db;
 
 use OCP\AppFramework\Db\Entity;
+use JsonSerializable;
 
-class Book extends Entity implements \JsonSerializable {
-
-	/**
-	 * Title of the book
-	 *
-	 * @var string
-	 */
+class Book extends Entity implements JsonSerializable
+{
 	protected $title;
 
-	/**
-	 * Id of the device where the book is storeds
-	 *
-	 * @var string
-	 */
 	protected $deviceId;
 
-	/**
-	 * Id of the book owner
-	 *
-	 * @var string
-	 */
 	protected $userId;
 
-	/**
-	 * Hash to ensure uniqeness of the entity
-	 *
-	 * @var string
-	 */
 	protected $hash;
 
-	/**
-	 * Extracted notes from the book
-	 *
-	 * @var array
-	 */
 	protected $notes;
 
-	public function __toString() {
+	public function __toString()
+	{
 		return $this->hash;
 	}
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->addType('id', 'integer');
 		$this->addType('title', 'string');
 		$this->addType('deviceId', 'string');
@@ -53,26 +32,46 @@ class Book extends Entity implements \JsonSerializable {
 		$this->addType('hash', 'string');
 	}
 
-	public function setTitle(string $title) {
+	/**
+	 * @param string $title
+	 */
+	public function setTitle(string $title)
+	{
 		parent::setTitle($title);
 		$this->updateHash();
 	}
 
-	public function setDeviceId(string $deviceId) {
+	/**
+	 * @param string $deviceId
+	 */
+	public function setDeviceId(string $deviceId)
+	{
 		parent::setDeviceId($deviceId);
 		$this->updateHash();
 	}
 
-	public function setUserId(string $userId) {
+	/**
+	 * @param string $userId
+	 */
+	public function setUserId(string $userId)
+	{
 		parent::setUserId($userId);
 		$this->updateHash();
 	}
 
-	public function getNotes(): array {
+	/**
+	 * @return Note[]
+	 */
+	public function getNotes(): array
+	{
 		return $this->notes;
 	}
 
-	public function updateHash(): bool {
+	/**
+	 * @return bool
+	 */
+	public function updateHash(): bool
+	{
 		if ($this->getTitle() && $this->getDeviceId() && $this->getUserId()) {
 			$this->setHash(
 				hash('sha256',
@@ -84,20 +83,29 @@ class Book extends Entity implements \JsonSerializable {
 		return false;
 	}
 
+
 	/**
-	 * @param array $notes
-	 * @return Package
+	 * @param Note[] $notes
 	 */
-	public function setNotes(array $notes): Book {
+	public function setNotes(array $notes)
+	{
 		$this->notes = $notes;
-		return $this;
 	}
 
-	public function addNote(Note $note) {
+	/**
+	 * @param Note $note
+	 */
+	public function addNote(Note $note)
+	{
 
 		$this->notes[] = $note;
 	}
-	public function jsonSerialize() {
+
+	/**
+	 * @return array
+	 */
+	public function jsonSerialize(): array
+	{
 		return [
 			'id' => $this->getId(),
 			'title' => $this->getTitle(),

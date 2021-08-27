@@ -2,10 +2,11 @@
 
 namespace OCA\Enotes\Db;
 
+use OCP\IDBConnection;
 use OCA\Enotes\Service\MailService;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
-use OCP\IDBConnection;
+
 
 class SettingsMapper extends QBMapper
 {
@@ -19,11 +20,8 @@ class SettingsMapper extends QBMapper
 	 */
 	protected $defaultSettings;
 
-	protected $propertiesToSerialize = ['mailAccounts'];
 
-	public function __construct(
-		IDbConnection $db,
-		MailService $mailService)
+	public function __construct(IDbConnection $db)
 	{
 		parent::__construct($db, 'enote_settings', Settings::class);
 	}
@@ -34,23 +32,13 @@ class SettingsMapper extends QBMapper
 	 */
 	protected function prepareforStorage(Settings $entity): Settings
 	{
-		$properties = get_object_vars($entity);
-		foreach ($properties as $propertyKey => $propertyValue) {
-			if (in_array($propertyKey, $this->propertiesToSerialize)) {
-				$entity->$propertyKey = serialize($propertyValue);
-			}
-		}
+		$entity->mailAccountSettings = serialize($entity->mailAccountSettings);
 		return $entity;
 	}
 
-	protected function prepareForLoading(Settings $entity)
+	protected function prepareForLoading(Settings $entity): Settings
 	{
-		$properties = get_object_vars($entity);
-		foreach ($properties as $propertyKey => $propertyValue) {
-			if (in_array($propertyKey, $this->propertiesToSerialize)) {
-				$entity->$propertyKey = unserialize($propertyValue);
-			}
-		}
+		$entity->mailAccountSettings = unserialize($entity->mailAccountSettings);
 		return $entity;
 	}
 
@@ -63,6 +51,7 @@ class SettingsMapper extends QBMapper
 				$qb->expr()->eq('user_id', $qb->createNamedParameter($userId))
 			);
 		$entity = $this->findEntity($qb);
+
 		return $this->prepareForLoading($entity);
 	}
 
