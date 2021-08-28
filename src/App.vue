@@ -1,5 +1,5 @@
 <template>
-	<Content :class="{'icon-loading': isLoading}" app-name="enotes">
+	<Content  app-name="enotes">
 		<AppNavigation>
 			<template id="app-enotes-navigation" #list>
 				<AppNavigationItem v-for="book in books"
@@ -13,28 +13,21 @@
 				<AppNavigationItem title="Settings"
 								   icon="icon-settings-dark"
 								   :pinned="true"
-								   @click="selectView('settings')"
+								   @click="toggleSettingsView()"
 				/>
 			</template>
 		</AppNavigation>
 		<AppContent>
-			<div v-if="alertMessage" :class="alertClass" @click="clear">
-				{{ alertMessage }}
-				<button type="button" class="close" data-dismiss="alert"
-						aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-
+			<Alert />
+			<div v-show="isLoadingIndicator" class="icon-loading"></div>
 			<div id="container">
-				<div v-if="showLoadingIcon" class="icon-loading spinner"/>
 				<Settings
-					v-if="view.settings"
+					v-if="currentView == 'settings'"
 					@requestFailed="handleError($event)"
 					@requestStarted="onRequestStarted"
 					@requestSucceeded="onRequestSucceeded($event)"
 				/>
-				<Note v-if="view.notes" v-for="note in book.notes"
+				<Note v-if="currentView == 'notes'" v-for="note in book.notes"
 					  :note="note"
 					  :book="book"/>
 
@@ -52,8 +45,9 @@ import AppNavigation from '@nextcloud/vue/dist/Components/AppNavigation'
 import AppNavigationItem from '@nextcloud/vue/dist/Components/AppNavigationItem'
 import AppContentList from '@nextcloud/vue/dist/Components/AppContentList'
 import Note from './components/Note'
+import Alert from './components/partials/Alert'
 import Settings from './components/Settings'
-import routes from './routes'
+
 
 export default {
 	name: 'App',
@@ -65,22 +59,17 @@ export default {
 		AppNavigationItem,
 		AppContentList,
 		Note,
-		Settings
+		Settings,
+		Alert
 	},
 	data() {
 		return {
-			view: {
-				notes: true,
-				settings: false
-			},
 			showLoadingIcon: false,
 			show: false,
 			starred: false,
 			settings: {},
-			isSettingsPage: false,
-			alertMessage: '',
-			isRequesting: false,
-			alertType: '',
+			isLoading: false,
+			isLoadingIndicator: false,
 			note: {
 				type: '',
 				content: '',
@@ -100,12 +89,10 @@ export default {
 	},
 	methods: {
 		handleError(error) {
-			this.hideLoadingIcon()
-			this.isRequesting = false
+			this.hideLoadingIndicator()
 			if (error.response) {
 				// Request made and server responded
-				this.alertMessage = error.response.data
-				this.alertType = 'error'
+				this.alertError(error.response.data)
 			} else if (error.request) {
 				// The request was made but no response was received
 				console.error(error.request)
@@ -115,68 +102,55 @@ export default {
 			}
 		},
 		onRequestStarted() {
-			this.isRequesting = true
+			this.showLoadingIndicator()
+		},
+		onRequestSucceeded(response) {
+			this.hideLoadingIndicator()
+			if (response.data.message) {
+				this.alertSuccess(response.data.message)
+			}
+		},
+		alertSuccess(message, type) {
+			this.$store.commit('alertSuccess', message)
+		},
+		alertError(message, type) {
+			this.$store.commit('alertError', message)
+		},
+		clearAlert() {
+			this.$store.commit('clearAlert')
+		},
+		showLoadingIndicator() {
+			this.isLoading = true
+
 			setTimeout(() => {
-				if (this.isRequesting) {
-					this.displayLoadingIcon()
+				if (this.isLoading) {
+					this.isLoadingIndicator = true
 				}
 			}, 500)
 		},
-		onRequestSucceeded(response) {
-			this.isRequesting = false
-			this.hideLoadingIcon()
-			if (response.data.message) {
-				this.showSuccessAlert(response.data.message)
-			}
+		hideLoadingIndicator() {
+			this.isLoading = false
+			this.isLoadingIndicator = false
 		},
-		hiderAlert() {
-			this.clear()
-		},
-		showSuccessAlert(message) {
-			this.alertMessage = message
-			this.alertType = "success"
-			this.hideLoadingIcon()
-		},
-		showErrorAlert(message) {
-			this.alertMessage = message
-			this.alertType = "error"
-			this.hideLoadingIcon()
-		},
-		displayLoadingIcon() {
-			this.showLoadingIcon = true
-		},
-		hideLoadingIcon() {
-			this.showLoadingIcon = false
-		},
-		selectView(view) {
-			switch (view) {
-				case 'settings':
-					this.view.notes = !this.view.notes
-					this.view.settings = !this.view.settings
-					break
-				default:
-					this.view.notes = true
-					this.view.settings = false
-			}
-			this.hiderAlert()
+		toggleSettingsView() {
+			this.initView()
+			this.$store.commit('toggleSettingsView')
 		},
 		getNotes() {
 			const vm = this
 			vm.displayLoadingIcon()
 			axios
-				.get(routes.getNotes)
+				.get(this.routes.getNotes)
 				.then(function (response) {
 					vm.books = JSON.parse(response.data)
 					if (typeof vm.books !== 'undefined' && vm.books.length > 0) {
 						vm.selectBook(vm.books[0])
 					}
-					vm.hideLoadingIcon()
 				})
 				.catch(function (error) {
 					vm.handleError(error)
 				})
 		},
-
 
 		selectNote(note) {
 			this.note = note
@@ -188,7 +162,7 @@ export default {
 		updateSettings() {
 			const vm = this
 			axios
-				.put(routes.updateSettings, vm.settings)
+				.put(this.routes.updateSettings, vm.settings)
 				.then(function (response) {
 					vm.settings = JSON.parse(response.data)
 				})
@@ -199,18 +173,15 @@ export default {
 		selectBook(book) {
 			this.book = book
 		},
-		clear() {
-			this.alertMessage = ''
-			this.hideLoadingIcon()
+		initView() {
+			this.hideLoadingIndicator()
+			this.clearAlert()
 		},
 	},
 
 	computed: {
-		alertClass: function () {
-			if (this.alertMessage && this.alertType === "error") {
-				return "alert alert-error"
-			}
-			return "alert alert-success"
+		currentView() {
+			return this.$store.state.currentView
 		}
 	}
 }
