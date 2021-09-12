@@ -7,9 +7,7 @@ use OCA\Enotes\Contracts\IMailAdapter;
 use OCA\Enotes\Db\BookMapper;
 use OCA\Enotes\MailAdapter;
 use OCA\Enotes\Service\SettingsService;
-use OCP\AppFramework\Http;
 use OCP\IRequest;
-use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Controller;
 use OCP\Util;
@@ -97,6 +95,5 @@ class NoteController extends Controller
 		if (!empty($books)) {
 			return new JSONResponse(json_encode($books));
 		}
-		return $this->scanMails();
 	}
 }
