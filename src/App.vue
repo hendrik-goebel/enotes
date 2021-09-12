@@ -47,6 +47,7 @@ import AppContentList from '@nextcloud/vue/dist/Components/AppContentList'
 import Note from './components/Note'
 import Alert from './components/partials/Alert'
 import Settings from './components/Settings'
+import routes from './routes'
 
 
 export default {
@@ -85,7 +86,7 @@ export default {
 	},
 
 	mounted() {
-		//this.getNotes()
+		this.getNotes()
 	},
 	methods: {
 		handleError(error) {
@@ -138,9 +139,9 @@ export default {
 		},
 		getNotes() {
 			const vm = this
-			vm.displayLoadingIcon()
+
 			axios
-				.get(this.routes.getNotes)
+				.get(routes.getNotes)
 				.then(function (response) {
 					vm.books = JSON.parse(response.data)
 					if (typeof vm.books !== 'undefined' && vm.books.length > 0) {
