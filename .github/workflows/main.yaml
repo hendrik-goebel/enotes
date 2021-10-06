@@ -8,7 +8,5 @@ jobs:
             - uses: actions/setup-node@v2
               with:
                   node-version: '14'
-
-            - run: ls -la
             - run: npm install
-            - run: ls -la
+            - run: npm run build
