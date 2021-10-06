@@ -1,5 +1,5 @@
 <template>
-	<div class="card card-1" v-show="isInitialized">
+	<div v-show="isInitialized" class="card card-1">
 		<form @submit.prevent="">
 			<div class="settings-group">
 				<div class="group-title">
@@ -11,15 +11,15 @@
 				</div>
 
 				<div v-for="account in settings.mailAccountSettings"
-					 class="form-check">
+					:key="account.id"
+					class="form-check">
 					<input
+						:id="'account-' + account.id"
+						v-model="account.active"
 						class="checkbox"
 						type="checkbox"
 						name="accounts[]"
-						v-model="account.active"
-						:id="'account-' + account.id"
-						@change="change()"
-					>
+						@change="change()">
 					<label :for="'account-' + account.id">
 						{{ account.email }}
 					</label>
@@ -35,18 +35,16 @@
 					</div>
 				</div>
 				<div>
-					<input type="text"
-						   class="settings-text"
-						   name="types"
-						   v-model="settings.types"
-					>
+					<input v-model="settings.types"
+						type="text"
+						class="settings-text"
+						name="types">
 				</div>
-
 			</div>
 
 			<div class="settings-group">
-				<button @click="fetch"
-						class="primary">
+				<button class="primary"
+					@click="fetch">
 					Fetch notes from emails
 				</button>
 			</div>
@@ -63,8 +61,14 @@ export default {
 	data() {
 		return {
 			isInitialized: false,
-			settings: {}
+			settings: {},
 		}
+	},
+	watch: {
+		'settings.types'() {
+			setTimeout(this.updateSettings, 1000)
+
+		},
 	},
 	mounted() {
 		this.get()
@@ -78,12 +82,12 @@ export default {
 			vm.$emit('requestStarted')
 			axios
 				.get(routes.getSettings)
-				.then(function (response) {
+				.then(function(response) {
 					vm.settings = JSON.parse(response.data)
 					vm.isInitialized = true
 					vm.$emit('requestSucceeded', response)
 				})
-				.catch(function (response) {
+				.catch(function(response) {
 					vm.$emit('requestFailed', response)
 				})
 		},
@@ -91,11 +95,11 @@ export default {
 			const vm = this
 			vm.$emit('requestStarted')
 			axios
-				.put(routes.updateSettings, {settings: vm.settings})
-				.then(function (response) {
+				.put(routes.updateSettings, { settings: vm.settings })
+				.then(function(response) {
 					vm.$emit('requestSucceeded', response)
 				})
-				.catch(function (response) {
+				.catch(function(response) {
 					vm.$emit('requestFailed', response)
 				})
 		},
@@ -104,19 +108,13 @@ export default {
 			this.$emit('requestStarted')
 			axios
 				.get(routes.getFetch)
-				.then(function (response) {
+				.then(function(response) {
 					vm.$emit('requestSucceeded', response)
 				})
-				.catch(function (response) {
+				.catch(function(response) {
 					vm.$emit('requestFailed', response)
 				})
 		},
 	},
-	watch: {
-		'settings.types': function () {
-			setTimeout(this.updateSettings, 1000)
-
-		},
-	}
 }
 </script>

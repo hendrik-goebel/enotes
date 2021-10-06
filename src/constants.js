@@ -1,9 +1,9 @@
 export const VIEW = {
 	NOTES: 'notes',
-	SETTINGS: 'settings'
+	SETTINGS: 'settings',
 }
 
 export const ALERT = {
 	ERROR: 'error',
-	SUCCESS: 'success'
+	SUCCESS: 'success',
 }

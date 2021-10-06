@@ -8,7 +8,6 @@
 
 <script>
 
-
 export default {
 	name: 'Alert',
 	data() {
@@ -17,24 +16,25 @@ export default {
 		}
 	},
 
-	methods: {
-		clear() {
-			this.$store.state.alert.message = null
-		}
-	},
-
 	computed: {
 		alertMessage() {
 			return this.$store.state.alert.message
 		},
 		alertClass() {
-			if (this.$store.state.alert.type == 'error') {
+			if (this.$store.state.alert.type === 'error') {
 				return 'alert alert-error'
 			}
-			if (this.$store.state.alert.type == 'success') {
+			if (this.$store.state.alert.type === 'success') {
 				return 'alert alert-success'
 			}
-		}
-	}
+			return ''
+		},
+	},
+
+	methods: {
+		clear() {
+			this.$store.state.alert.message = null
+		},
+	},
 }
 </script>

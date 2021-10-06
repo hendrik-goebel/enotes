@@ -21,6 +21,7 @@ module.exports = {
 		'selector-list-comma-newline-after': null,
 		'no-descending-specificity': null,
 		'string-quotes': 'single',
+
 		'selector-pseudo-element-no-unknown': [
 			true,
 			{

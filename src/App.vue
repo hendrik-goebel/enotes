@@ -1,36 +1,37 @@
 <template>
-	<Content  app-name="enotes">
+	<Content app-name="enotes">
 		<AppNavigation>
 			<template id="app-enotes-navigation" #list>
 				<AppNavigationItem v-for="book in books"
-								   :key="book.id"
-								   :title="book.title"
-								   :allow-collapse="false"
-								   icon="icon-folder"
-								   @click="selectBook(book),selectView('note')"
-				/>
+					:key="book.id"
+					:title="book.title"
+					:allow-collapse="false"
+					icon="icon-folder"
+					@click="selectBook(book),selectView('note')" />
 
 				<AppNavigationItem title="Settings"
-								   icon="icon-settings-dark"
-								   :pinned="true"
-								   @click="toggleSettingsView()"
-				/>
+					icon="icon-settings-dark"
+					:pinned="true"
+					@click="toggleSettingsView()" />
 			</template>
 		</AppNavigation>
 		<AppContent>
 			<Alert />
-			<div v-show="isLoadingIndicator" class="icon-loading"></div>
+			<div v-show="isLoadingIndicator" class="icon-loading" />
 			<div id="container">
 				<Settings
 					v-if="currentView == 'settings'"
 					@requestFailed="handleError($event)"
 					@requestStarted="onRequestStarted"
-					@requestSucceeded="onRequestSucceeded($event)"
-				/>
-				<Note v-if="currentView == 'notes'" v-for="note in book.notes"
-					  :note="note"
-					  :book="book"/>
+					@requestSucceeded="onRequestSucceeded($event)" />
 
+				<div v-if="currentView === 'notes'">
+					<Note v-for="{note, index} in book.notes"
+
+						:key="index"
+						:note="note"
+						:book="book" />
+				</div>
 			</div>
 		</AppContent>
 	</Content>
@@ -40,28 +41,23 @@
 import Content from '@nextcloud/vue/dist/Components/Content'
 import AppContent from '@nextcloud/vue/dist/Components/AppContent'
 import axios from '@nextcloud/axios'
-import AppSidebar from '@nextcloud/vue/dist/Components/AppSidebar'
 import AppNavigation from '@nextcloud/vue/dist/Components/AppNavigation'
 import AppNavigationItem from '@nextcloud/vue/dist/Components/AppNavigationItem'
-import AppContentList from '@nextcloud/vue/dist/Components/AppContentList'
 import Note from './components/Note'
 import Alert from './components/partials/Alert'
 import Settings from './components/Settings'
 import routes from './routes'
-
 
 export default {
 	name: 'App',
 	components: {
 		Content,
 		AppContent,
-		AppSidebar,
 		AppNavigation,
 		AppNavigationItem,
-		AppContentList,
 		Note,
 		Settings,
-		Alert
+		Alert,
 	},
 	data() {
 		return {
@@ -83,6 +79,12 @@ export default {
 			},
 			books: [],
 		}
+	},
+
+	computed: {
+		currentView() {
+			return this.$store.state.currentView
+		},
 	},
 
 	mounted() {
@@ -142,20 +144,20 @@ export default {
 
 			axios
 				.get(routes.getNotes)
-				.then(function (response) {
+				.then(function(response) {
 					vm.books = JSON.parse(response.data)
 					if (typeof vm.books !== 'undefined' && vm.books.length > 0) {
 						vm.selectBook(vm.books[0])
 					}
 				})
-				.catch(function (error) {
+				.catch(function(error) {
 					vm.handleError(error)
 				})
 		},
 
 		selectNote(note) {
 			this.note = note
-			this.book = this.books.filter(function (book) {
+			this.book = this.books.filter(function(book) {
 				return (book.id === note.bookId)
 			}).pop()
 		},
@@ -164,10 +166,10 @@ export default {
 			const vm = this
 			axios
 				.put(this.routes.updateSettings, vm.settings)
-				.then(function (response) {
+				.then(function(response) {
 					vm.settings = JSON.parse(response.data)
 				})
-				.catch(function (error) {
+				.catch(function(error) {
 					vm.handleError(error)
 				})
 		},
@@ -179,11 +181,5 @@ export default {
 			this.clearAlert()
 		},
 	},
-
-	computed: {
-		currentView() {
-			return this.$store.state.currentView
-		}
-	}
 }
 </script>

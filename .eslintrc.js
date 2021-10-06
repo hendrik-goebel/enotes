@@ -4,5 +4,6 @@ module.exports = {
 	],
 	rules: {
 		'no-console': 'off',
+		'node/no-unpublished-import': 'off',
 	},
 };

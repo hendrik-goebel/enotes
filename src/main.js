@@ -19,7 +19,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-import {translate, translatePlural} from '@nextcloud/l10n'
+import { translate, translatePlural } from '@nextcloud/l10n'
 
 import Vue from 'vue'
 import App from './App'
@@ -31,10 +31,9 @@ Vue.config.devtools = true
 Vue.prototype.t = translate
 Vue.prototype.n = translatePlural
 
-
 export default new Vue({
 	el: '#content',
-	store: store,
-	routes: routes,
+	store,
+	routes,
 	render: h => h(App),
 })
