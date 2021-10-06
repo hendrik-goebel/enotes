@@ -35,7 +35,6 @@ use OCA\Mail\Service\AccountService;
 use OCA\Mail\Service\AliasesService;
 
 use OCA\Enotes\Service\MailService;
-use OCA\Enotes\Service\NoteService;
 
 class PageController extends Controller {
 

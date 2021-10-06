@@ -17,3 +17,5 @@ yarn-error.log*
 
 build/
 coverage/
+js/
+tests/*.cache
