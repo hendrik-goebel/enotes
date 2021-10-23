@@ -5,7 +5,7 @@ $margin-content-right: 1%;
 $content-width: 100% - $margin-content-left - $margin-content-right;
 $border-size: 1px;
 
-#container {
+.container {
 	display: flex;
 	flex-wrap: wrap;
 }
@@ -47,13 +47,17 @@ $border-size: 1px;
 	}
 }
 
+.note-content {
+	margin-bottom: 15px;
+}
+
 .meta-wrap {
 	align-self: flex-end;
 }
 
 .meta-tag {
 	font-size: 10px;
-	padding: 2%;
+	padding: 10px;
 	background-color: $color-background-hover;
 	border-radius: $border-radius;
 	border-color: $color-border;
@@ -160,4 +164,15 @@ $border-size: 1px;
 
 .settings-group {
 	margin-bottom: 5%;
+}
+
+
+.header {
+	text-align: center;
+
+	h1 {
+		font-size: 20px;
+		fot-weight: bold;
+		padding: 20px;
+	}
 }

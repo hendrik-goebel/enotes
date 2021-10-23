@@ -3,34 +3,39 @@
 		<AppNavigation>
 			<template id="app-enotes-navigation" #list>
 				<AppNavigationItem v-for="book in books"
-					:key="book.id"
-					:title="book.title"
-					:allow-collapse="false"
-					icon="icon-folder"
-					@click="selectBook(book),selectView('note')" />
+								   :key="book.id"
+								   :title="book.title"
+								   :allow-collapse="false"
+								   icon="icon-folder"
+								   ref="books"
+
+								   @click="selectBook(book)"/>
 
 				<AppNavigationItem title="Settings"
-					icon="icon-settings-dark"
-					:pinned="true"
-					@click="toggleSettingsView()" />
+								   icon="icon-settings-dark"
+								   :pinned="true"
+								   @click="toggleSettingsView()"/>
 			</template>
 		</AppNavigation>
 		<AppContent>
-			<Alert />
-			<div v-show="isLoadingIndicator" class="icon-loading" />
-			<div id="container">
+			<Alert/>
+			<div v-show="isLoadingIndicator" class="icon-loading"/>
+			<div class="container">
 				<Settings
 					v-if="currentView == 'settings'"
 					@requestFailed="handleError($event)"
 					@requestStarted="onRequestStarted"
-					@requestSucceeded="onRequestSucceeded($event)" />
+				/>
 
 				<div v-if="currentView === 'notes'">
-					<Note v-for="{note, index} in book.notes"
 
-						:key="index"
-						:note="note"
-						:book="book" />
+					<div class="header"><h1>{{book.title}}</h1></div>
+					<div class="container">
+						<Note v-for="note in book.notes"
+							  :key="note.id"
+							  :note="note"
+							  :book="book"/>
+					</div>
 				</div>
 			</div>
 		</AppContent>
@@ -144,20 +149,20 @@ export default {
 
 			axios
 				.get(routes.getNotes)
-				.then(function(response) {
+				.then(function (response) {
 					vm.books = JSON.parse(response.data)
 					if (typeof vm.books !== 'undefined' && vm.books.length > 0) {
 						vm.selectBook(vm.books[0])
 					}
 				})
-				.catch(function(error) {
+				.catch(function (error) {
 					vm.handleError(error)
 				})
 		},
 
 		selectNote(note) {
 			this.note = note
-			this.book = this.books.filter(function(book) {
+			this.book = this.books.filter(function (book) {
 				return (book.id === note.bookId)
 			}).pop()
 		},
@@ -166,10 +171,10 @@ export default {
 			const vm = this
 			axios
 				.put(this.routes.updateSettings, vm.settings)
-				.then(function(response) {
+				.then(function (response) {
 					vm.settings = JSON.parse(response.data)
 				})
-				.catch(function(error) {
+				.catch(function (error) {
 					vm.handleError(error)
 				})
 		},
