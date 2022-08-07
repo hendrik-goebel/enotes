@@ -25,6 +25,7 @@
 					v-if="currentView == 'settings'"
 					@requestFailed="handleError($event)"
 					@requestStarted="onRequestStarted"
+					@requestSucceeded="onRequestSucceeded"
 				/>
 
 				<div v-if="currentView === 'notes'">
