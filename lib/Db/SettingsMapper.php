@@ -21,7 +21,7 @@ class SettingsMapper extends QBMapper
 	protected $defaultSettings;
 
 
-	public function __construct(IDbConnection $db)
+	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'enote_settings', Settings::class);
 	}

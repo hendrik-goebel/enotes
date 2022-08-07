@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace OCA\Enotes\Controller;
 
-use OCA\Enotes\Contracts\IMailAdapter;
 use OCA\Enotes\Db\BookMapper;
 use OCA\Enotes\MailAdapter;
 use OCA\Enotes\Service\SettingsService;
@@ -46,11 +45,11 @@ class NoteController extends Controller
 	 */
 	protected $accountService;
 #
-	protected IMailAdapter $mailAdapter;
+	protected  $mailAdapter;
 
-	protected SettingsService $settingsService;
+	protected  $settingsService;
 
-	protected BookMapper $bookMapper;
+	protected  $bookMapper;
 
 	public function __construct(
 		$appName,

@@ -12,7 +12,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 class NoteMapper extends QBMapper
 {
-	public function __construct(IDbConnection $db)
+	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'enote_note', Note::class);
 	}
