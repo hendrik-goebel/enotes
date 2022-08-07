@@ -15,10 +15,6 @@ const store = new Vuex.Store({
 		},
 	},
 	mutations: {
-		increment(state) {
-			state.count++
-			console.log(state.count)
-		},
 		toggleSettingsView(state) {
 			state.currentView = state.currentView === VIEW.NOTES ? VIEW.SETTINGS : VIEW.NOTES
 		},

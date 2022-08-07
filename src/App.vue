@@ -8,7 +8,6 @@
 								   :allow-collapse="false"
 								   icon="icon-folder"
 								   ref="books"
-
 								   @click="selectBook(book)"/>
 
 				<AppNavigationItem title="Settings"
@@ -144,6 +143,9 @@ export default {
 		toggleSettingsView() {
 			this.initView()
 			this.$store.commit('toggleSettingsView')
+			if (this.currentView == 'notes') {
+				this.getNotes()
+			}
 		},
 		getNotes() {
 			const vm = this
